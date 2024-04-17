@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Endpoints</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        li {
+            padding: 10px;
+            background-color: #f4f4f4;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        li:nth-child(even) {
+            background-color: #ddd;
+        }
+        code {
+            font-family: Consolas, monospace;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Application Endpoints List</h1>
+    <ul>
+        <li>
+            <strong>Home:</strong> <code>/</code> - API's Home Page
+        </li>
+        <li>
+            <strong>PlayTimeGenre:</strong> <code>/playtimegenre/{genre}</code> - Year with most played hours for a genre
+        </li>
+        <li>
+            <strong>UserForGenre:</strong> <code>/userforgenre/{genre}</code> - User with most played hours for a genre
+        </li>
+        <li>
+            <strong>UsersRecommend:</strong> <code>/usersrecommend/{year}</code> - Top 3 games most recommended by users for a year
+        </li>
+        <li>
+            <strong>UsersWorstDeveloper:</strong> <code>/usersworstdeveloper/{year}</code> - Top 3 worst developers for a year
+        </li>
+        <li>
+            <strong>SentimentAnalysis:</strong> <code>/sentimentanalysis/{year}</code> - Sentiment analysis of reviews for a year
+        </li>
+        <li>
+            <strong>RecomendacionJuego:</strong> <code>/recomendacion_juego/{id}</code> - Recommendation of similar games to a given game
+        </li>
+    </ul>
+</body>
+</html>
