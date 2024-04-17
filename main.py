@@ -5,16 +5,16 @@ from fastapi.responses import HTMLResponse
 import pandas as pd
 import scipy as sp
 from sklearn.metrics.pairwise import cosine_similarity
-
+from typing import List
 #instanciar la aplicación
 
 app = FastAPI()
 
 
 #dataframes que se utilizan en las funciones de la API
-developerDF= pd.read_parquet("data/PlayTimeGenre.parquet")
-userDataDF= pd.read_parquet("data/UserForGenre.parquet")
-userForGenreDF= pd.read_parquet("data/UsersRecommend.parquet")
+developerDF= pd.read_parquet("data/Developer.parquet")
+userForGenreDF= pd.read_parquet("data/UserForGenre.parquet")
+UserDataDF= pd.read_parquet("data/UsersData.parquet")
 bestDeveloperDF= pd.read_parquet("data/UsersWorstDeveloper.parquet")
 DeveloperReviewsDF= pd.read_parquet("data/sentimiento_analisis.parquet")
 modelo= pd.read_parquet("data/modelo_render.parquet")
@@ -29,35 +29,64 @@ async def inicio():
 
 
 
+@app.get('/developer/{desarrollador}', response_model=List[dict], name="DEVELOPER")
+async def developer(desarrollador: str):
+    # Filtrar el DataFrame por el desarrollador específico
+    df_desarrollador = developerDF[developerDF['developer'] == desarrollador]
+
+    # Agrupar por año y contar la cantidad de items y el contenido free
+    info_por_año = df_desarrollador.groupby('year').agg(
+        cantidad_items=('developer', 'count'),
+        contenido_free=('free_to_play', lambda x: f"{(sum(x) / len(x) * 100):.2f}%")
+    ).reset_index()
+
+    # Retornar la información como JSON
+    return info_por_año.to_dict(orient='records')
 
 
 
 
-#Primera función
-@app.get("/playtimegenre/{genre}", name="PLAYTIMEGENRE")
-async def PlayTimeGenre(genre: str):
-    """
-    Debe devolver año con mas horas jugadas para dicho género.
-    
-    Parametro: 
-    Action, Adventure, RPG, Strategy, Simulation, Casual, etc.
+# Endpoint para obtener  `cantidad` de dinero gastado por el usuario, el `porcentaje`
+# de recomendación en base a reviews.recommend y `cantidad de items`
+@app.get('/userdata/{user_id}', response_model=List[dict])
+async def userdata(user_id: str):
+    # Filtrar el DataFrame según el user_id
+    user_data = UserDataDF[UserDataDF['user_id'] == user_id]
 
-    """
-    # Filtramos por genero
-    data_genres = developerDF[developerDF['genres'].str.contains(genre)]
-    # Agrupamos por año y sumamos las horas jugadas
-    data_genres = data_genres.groupby('release_year')['playtime_forever'].sum().reset_index()
-    # Obtenemos el año con mayor horas jugadas
-    year = int(data_genres[data_genres['playtime_forever'] == data_genres['playtime_forever'].max()]['release_year'].values[0])    
-    return {'Año de lanzamiento con más horas jugadas para Género': genre, 'Año': year}
+    if len(user_data) == 0:
+        return {"error": "El usuario no existe en los datos."}
+
+    # Cantidad de dinero gastado por el usuario
+    dinero_gastado = user_data['price'].sum()
+
+    # Porcentaje de recomendación
+    total_recomendaciones = user_data['recommend'].sum()
+    cantidad_items = len(user_data)
+
+    if cantidad_items == 0:
+        porcentaje_recomendacion = 0
+    else:
+        porcentaje_recomendacion = (total_recomendaciones / cantidad_items) * 100
+
+    # Formatear los resultados
+    resultado = {
+        "Usuario": user_id,
+        "Dinero gastado": f"{dinero_gastado} USD",
+        "% de recomendación": f"{porcentaje_recomendacion:.2f}%",
+        "Cantidad de items": cantidad_items
+    }
+
+    return [resultado]
 
 
 
-#Seguna Función
+
+
+
 @app.get("/userforgenre/{genre}", name="USERFORGENRE")
 async def UserForGenre(genre: str):
     # Filtramos por género
-    data_genres = userDataDF[userDataDF['genres'].str.contains(genre)].copy()  # Copiamos el DataFrame para evitar la advertencia
+    data_genres = userForGenreDF[userForGenreDF['genres'].str.contains(genre)].copy()  # Copiamos el DataFrame para evitar la advertencia
     # Convertir minutos a horas y redondear a números enteros
     data_genres.loc[:, 'playtime_forever'] = (data_genres['playtime_forever'] / 60).round().astype(int)
     # Agrupamos por usuario y sumamos las horas jugadas
@@ -76,34 +105,13 @@ async def UserForGenre(genre: str):
 
 
 
-#Tercera funcion
-@app.get("/usersrecommend/{year}", name = "USERSRECOMMEND")
-async def UsersRecommend( year : int ):
-    # Filtramos por año
-    data_year = userForGenreDF[userForGenreDF['release_year'] == year]
-    # Verifica que exista informacion del año solicitado
-    if data_year.empty:
-        # Devuelve un mensaje de error
-        return {f"No hay datos para el año {year}"}
-    # Agrupo por juego y sumo sentimientos
-    games_group = userForGenreDF.groupby(['app_name'])['sentiment_analisis'].sum()
-    # Ordeno de mayor a menor
-    rank = games_group.sort_values(ascending=False)    
-    # Top 3
-    top_3 = rank.head(3) 
-    response = []
-    i = 1
-    for title, j in top_3.items():
-        dic = {f'Puesto {i}':title}
-        response.append(dic)
-        i += 1
-    return {'Top 3 de juegos MÁS recomendados por usuarios para el año': year, 'Top 3': response}
+
 
 
 
 
 #Cuarta función
-@app.get("/usersworstdeveloper/{year}", name = "USERSWORSTDEVELOPER")
+@app.get("/bestdeveloper/{year}", name = "BESTDEVELOPER")
 async def UsersWorstDeveloper(year: int):
     mascara = (bestDeveloperDF['release_year'] == year)   
     df_filtered = bestDeveloperDF[mascara]
@@ -144,27 +152,4 @@ async def sentiment_analysis(year: int):
 
 
 
-#Modelo de recomendación item-item
-@app.get("/recomendacion_juego/{id}", name= "RECOMENDACION_JUEGO")
-async def recomendacion_juego(id: int):
-    
-    id = int(id)
-    # Filtrar el juego e igualarlo a  su ID
-    juego_seleccionado = modelo[modelo['item_id'] == id]
-    # devolver error en caso de vacio
-    if juego_seleccionado.empty:
-        return "El juego con el ID especificado no existe en la base de datos."
-    
-    # Calcular la matriz de similitud coseno
-    #similitudes = cosine_similarity(modelo_item.iloc[:,3:])
-    
-    # Calcula la similitud del juego que se ingresa con otros juegos del dataframe
-    similarity_scores = similitudes[modelo[modelo['item_id'] == id].index[0]]
-    
-    # Calcula los índices de los juegos más similares (excluyendo el juego de entrada)
-    indices_juegos_similares = similarity_scores.argsort()[::-1][1:6]
-    
-    # Obtener los nombres de los juegos 5 recomendados
-    juegos_recomendados = modelo.iloc[indices_juegos_similares]['app_name']
-    
-    return juegos_recomendados
+
