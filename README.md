@@ -1,7 +1,11 @@
-# Guía del Proyecto
+# Guía del Proyecto Integrador # 1 
+# Modelo de Recomendacion SteamGameRecommender
 
 ## Introducción
-Bienvenido al proyecto GameRecommender. Esta guía está diseñada para ayudarte a comprender la estructura y la organización del proyecto, así como para facilitar tu navegación por los diferentes componentes y recursos disponibles.
+
+Este proyecto se centró en la creación de una api RestFull para un  sistema de recomendación de videojuegos personalizado para la plataforma Steam. El objetivo era ofrecer una herramienta que facilitara a los usuarios el descubrimiento de nuevos juegos que se ajustaran a sus preferencias e intereses Ademas de conocer otras metricas.
+
+ Esta guía está diseñada para ayudarte a comprender la estructura y la organización del proyecto, así como para facilitar tu navegación por los diferentes componentes y recursos disponibles.
 
 ## Estructura del Proyecto
 
@@ -21,7 +25,7 @@ La carpeta `API` contiene los archivos relacionados con la API de la aplicación
 
 ## Uso del Proyecto
 
-Para utilizar este proyecto, sigue estos pasos:
+Recomiendo que siga en este orden.
 
 1. **Explora la Carpeta ETL:** Comienza revisando los Notebooks en la carpeta `ETL`. Cada uno de estos Notebooks describe el proceso de ETL para un DataFrame específico. Sigue las instrucciones detalladas en cada Notebook para entender cómo se cargan, transforman y extraen los datos.
 
@@ -31,7 +35,7 @@ Para utilizar este proyecto, sigue estos pasos:
 
 ## Recursos Adicionales
 
-- [Enlace al Repositorio del Proyecto](URL_DEL_REPOSITORIO): Encuentra el código fuente, los Notebooks y otros recursos relacionados con este proyecto en nuestro repositorio público.
-- [Documentación de la API](URL_DE_LA_DOCUMENTACION): Consulta la documentación detallada de la API para obtener más información sobre cómo utilizar sus endpoints.
+- [Enlace al Repositorio del Proyecto](https://github.com/Antojose93/SteamGameRecommender.git): Encuentra el código fuente, los Notebooks y otros recursos relacionados con este proyecto en nuestro repositorio público.
+- [Documentación de la API](https://steam-game-recommender.onrender.com/): Consulta la documentación detallada de la API para obtener más información sobre cómo utilizar sus endpoints.
 
-¡Gracias por utilizar nuestro proyecto! Si tienes alguna pregunta o necesitas ayuda adicional, no dudes en contactarnos.
+

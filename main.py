@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 import pandas as pd
 import scipy as sp
 from sklearn.metrics.pairwise import cosine_similarity
-from typing import List
+from typing import List, Optional
 #instanciar la aplicación
 
 app = FastAPI()
@@ -15,7 +15,7 @@ app = FastAPI()
 developerDF= pd.read_parquet("data/Developer.parquet")
 userForGenreDF= pd.read_parquet("data/UserForGenre.parquet")
 UserDataDF= pd.read_parquet("data/UsersData.parquet")
-bestDeveloperDF= pd.read_parquet("data/UsersWorstDeveloper.parquet")
+bestDeveloperDF= pd.read_parquet("data/UsersBestDeveloper.parquet")
 DeveloperReviewsDF= pd.read_parquet("data/sentimiento_analisis.parquet")
 modelo= pd.read_parquet("data/modelo_render.parquet")
 similitudes = cosine_similarity(modelo.iloc[:,3:])
@@ -125,30 +125,26 @@ async def UsersWorstDeveloper(year: int):
 
 
 
-#Quinta función
-@app.get("/sentimentanalysis/{year}", name="SENTIMENTANALYSIS")
-async def sentiment_analysis(year: int):
-    # Filtramos por año
-    data_year = DeveloperReviewsDF[DeveloperReviewsDF['release_year'] == year]
-    # Agrupamos por sentimiento y contamos las reseñas
-    data_year = data_year.groupby('sentiment_analisis')['review'].count().reset_index()
-    # Obtenemos el top 3
-    sentiment = data_year.to_dict('records')
-    # Inicializar contadores
-    negative_count = 0
-    neutral_count = 0
-    positive_count = 0
-    # Contar el número de reseñas con cada sentimiento
-    for s in sentiment:
-        if s['sentiment_analisis'] == 0:
-            negative_count += s['review']
-        elif s['sentiment_analisis'] == 1:
-            neutral_count += s['review']
-        elif s['sentiment_analisis'] == 2:
-            positive_count += s['review']
-    # Crear el diccionario con los contadores
-    sentiment = {'Negative': negative_count, 'Neutral': neutral_count, 'Positive': positive_count}
-    return {'Según el año de lanzamiento': year, 'Sentimiento': sentiment}
+@app.get("/developer_reviews_analysis/")
+async def developer_reviews_analysis(desarrolladora: str):
+    # Filtrar el DataFrame por el desarrollador dado
+    developer_df = DeveloperReviewsDF[DeveloperReviewsDF['developer'].str.contains(desarrolladora)].copy()
+
+    # Contar el número de registros para cada valor de análisis de sentimiento
+    positive_count = (developer_df['sentiment_analysis'] == 2).sum()
+    neutral_count = (developer_df['sentiment_analysis'] == 1).sum()
+    negative_count = (developer_df['sentiment_analysis'] == 0).sum()
+
+    # Construir el diccionario de retorno
+    analysis_dict = {
+        desarrolladora: {
+            'Positive': positive_count,
+            'Neutral': neutral_count,
+            'Negative': negative_count
+        }
+    }
+
+    return analysis_dict
 
 
 
